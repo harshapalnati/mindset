@@ -5,6 +5,8 @@
 ![Phoenix Version](https://img.shields.io/badge/phoenix-1.7%2B-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+> **Note:** This project is handcrafted. Not vibe-coded. Built line-by-line to master the BEAM.
+
 **Mindset** is a hybrid AI inference server and chat application built on the BEAM (Erlang VM).
 
 It is designed to evaluate the viability of Elixir as a full-stack AI platform, transitioning from a cloud-api wrapper to a native, in-app inference engine using the Nx ecosystem.
