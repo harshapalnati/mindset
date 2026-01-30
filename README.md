@@ -11,7 +11,7 @@
 
 It is designed to evaluate the viability of Elixir as a full-stack AI platform, transitioning from a cloud-api wrapper to a native, in-app inference engine using the Nx ecosystem.
 
-## 🏗 Architecture
+##  Architecture
 
 The project is split into two distinct evolutionary phases:
 
@@ -29,7 +29,7 @@ The project is split into two distinct evolutionary phases:
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 * **Elixir**: v1.15+
@@ -70,7 +70,7 @@ Visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 ---
 
-## 🛠 Usage
+##  Usage
 
 ### Phase 1 (Cloud Mode)
 Currently, the application defaults to **Cloud Mode**. Ensure your `OPENAI_API_KEY` is set. The chat interface at `/` will automatically route messages to the configured provider.
