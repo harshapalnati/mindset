@@ -4,25 +4,25 @@ defmodule Mindset.AI do
   def generate_response(prompt) do
     api_key = System.get_env("OPENAI_API_KEY")
 
-    # FIXED: "headers" (plural) and spelling of "Authorization"
+
     headers = [
       {"Authorization", "Bearer #{api_key}"},
       {"Content-Type", "application/json"}
     ]
 
-    # FIXED: "messages" (plural) is what OpenAI expects, not "message"
+
     body = %{
       model: "gpt-4",
       messages: [%{role: "user", content: prompt}],
       temperature: 0.7
     }
 
-    # FIXED: headers variable name matches above
+
     Req.post("https://api.openai.com/v1/chat/completions", headers: headers, json: body)
     |> parse_response()
   end
 
-  # FIXED: Spelling of parse_response
+
   def parse_response({:ok, %{status: 200, body: body}}) do
     response_text =
       body["choices"]

@@ -19,7 +19,7 @@ The project is split into two distinct evolutionary phases:
 * **Role:** Production-grade UI & State Management.
 * **Inference:** Offloaded to OpenAI/Anthropic APIs.
 * **Transport:** WebSocket (Phoenix LiveView) for <50ms latency UI updates.
-* **Storage:** Postgres for conversation history.
+* **Storage:** sqlite3 for conversation history.
 
 ### Phase 2: Native Inference (Planned)
 * **Role:** In-App Intelligence.
