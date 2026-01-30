@@ -12,7 +12,7 @@ import Config
 
 config :mindset, Mindset.Repo,
   adapter: Ecto.Adapters.SQLite3,
-  database: "priv/repo/mindset_dev.db",
+  database: Path.expand("../priv/repo/mindset_dev.db", __DIR__),
   pool_size: 5,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true

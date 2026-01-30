@@ -13,6 +13,6 @@ defmodule Mindset.Chat do
 
 
   def list_messages do
-    Repo.all(Messages)
+    Mindset.Repo.all(Message)
   end
 end

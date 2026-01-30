@@ -9,9 +9,10 @@ defmodule Mindset.Application do
   def start(_type, _args) do
     children = [
       MindsetWeb.Telemetry,
-      #Mindset.Repo,
+      Mindset.Repo,
       {DNSCluster, query: Application.get_env(:mindset, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Mindset.PubSub},
+
       # Start a worker by calling: Mindset.Worker.start_link(arg)
       # {Mindset.Worker, arg},
       # Start to serve requests, typically the last entry
