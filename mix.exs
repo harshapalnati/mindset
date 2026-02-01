@@ -67,6 +67,11 @@ defmodule Mindset.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
+      {:nx, "~> 0.9"},
+      {:bumblebee, "~> 0.6"},
+      {:explorer, "~> 0.9"},
+      {:owl, "~> 0.11"},
+      {:dotenvy, "~> 1.1"}
 
     ]
   end

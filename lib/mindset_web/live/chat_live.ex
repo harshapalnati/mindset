@@ -1,16 +1,14 @@
 defmodule MindsetWeb.ChatLive do
   use MindsetWeb, :live_view
-  alias Mindset.AI
-  alias Mindset.Chat # Added alias to call your Chat context
+  alias Mindset.Chat
 
   def mount(_params, _session, socket) do
-    # Fetch all messages from the DB on load
+    # Fetch existing history from DB
     messages = Chat.list_messages()
 
     {:ok,
      assign(socket,
        messages: messages,
-       response: "Waiting for your prompt ...",
        loading: false
      )}
   end
@@ -42,6 +40,7 @@ defmodule MindsetWeb.ChatLive do
         <% end %>
       </div>
 
+      <%!-- Note: Use phx-change if you want to clear input, or use a hook --%>
       <form phx-submit="ask_ai" class="flex gap-2 bg-white p-2 border-t">
         <input type="text" name="user_input" placeholder="Type something..."
                class="flex-1 p-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -55,28 +54,45 @@ defmodule MindsetWeb.ChatLive do
   end
 
   def handle_event("ask_ai", %{"user_input" => input}, socket) do
-    # 1. Save and immediately update the UI with the user message
+    # 1. Save and update UI with the user message immediately
     {:ok, user_msg} = Chat.create_message(%{role: "user", content: input})
 
-    socket = assign(socket,
-      messages: socket.assigns.messages ++ [user_msg],
-      loading: true
-    )
+    # 2. Capture the current process ID (The LiveView) to use inside the Task
+    parent_pid = self()
 
-    # 2. Call the AI module
-    case AI.generate_response(input) do
-      {:ok, ai_text} ->
-        # 3. Save AI response and update message list
-        {:ok, ai_msg} = Chat.create_message(%{role: "assistant", content: ai_text})
+    # 3. Start the AI task unlinked (so it doesn't crash the UI if it fails)
+    Task.Supervisor.start_child(Mindset.TaskSupervisor, fn ->
+      # Perform the heavy math
+      case Mindset.Ai.Daemon.predict(input) do
+        %{results: [%{text: ai_text}]} ->
+          {:ok, ai_msg} = Chat.create_message(%{role: "assistant", content: ai_text})
+          # Send message back to the LiveView process
+          send(parent_pid, {:ai_finished, ai_msg})
 
-        {:noreply,
-         assign(socket,
-           messages: socket.assigns.messages ++ [ai_msg],
-           loading: false
-         )}
+        _error ->
+          send(parent_pid, {:ai_error, "Model returned an empty response"})
+      end
+    end)
 
-      {:error, _reason} ->
-        {:noreply, assign(socket, loading: false)}
-    end
+    {:noreply,
+      socket
+      |> assign(loading: true)
+      |> assign(messages: socket.assigns.messages ++ [user_msg])
+    }
   end
+
+  def handle_info({:ai_finished, ai_msg}, socket) do
+  Logger.info("📥 [UI] Received AI message for display: #{ai_msg.content}")
+
+  {:noreply,
+   assign(socket,
+     messages: socket.assigns.messages ++ [ai_msg],
+     loading: false
+   )}
+end
+
+def handle_info({:ai_error, reason}, socket) do
+  Logger.error("❌ [UI] AI Task failed. Reason: #{inspect(reason)}")
+  {:noreply, assign(socket, loading: false)}
+end
 end

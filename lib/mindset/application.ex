@@ -7,15 +7,27 @@ defmodule Mindset.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
+
+     children = [
+      # Start the Telemetry supervisor
       MindsetWeb.Telemetry,
-      Mindset.Repo,
-      {DNSCluster, query: Application.get_env(:mindset, :dns_cluster_query) || :ignore},
+
+      # Start the PubSub system for real-time AI streaming
       {Phoenix.PubSub, name: Mindset.PubSub},
 
-      # Start a worker by calling: Mindset.Worker.start_link(arg)
-      # {Mindset.Worker, arg},
-      # Start to serve requests, typically the last entry
+      # Start the Ecto repository for saving your chat history
+      Mindset.Repo,
+
+      # Setup DNS clustering (standard Phoenix 1.7+ config)
+      {DNSCluster, query: Application.get_env(:mindset, :dns_cluster_query) || :ignore},
+
+      # --- THE BRAIN ---
+      # Start the AI Daemon background process.
+      # This loads the 2.2GB model into RAM once on boot.
+      {Task.Supervisor, name: Mindset.TaskSupervisor},
+      Mindset.Ai.Daemon,
+
+      # Start the Endpoint (http/https server)
       MindsetWeb.Endpoint
     ]
 

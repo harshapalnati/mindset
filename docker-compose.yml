@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: mindset_dev
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: ecto://postgres:postgres_password@db/mindset_dev
+      SECRET_KEY_BASE: $(mix phx.gen.secret)
+    depends_on:
+      - db
