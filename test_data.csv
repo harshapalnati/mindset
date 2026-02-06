@@ -1,0 +1,11 @@
+prompt,response
+"Hello","Hi there! How can I help you today?"
+"What is your name?","I am Mindset, your AI assistant."
+"How are you?","I am doing well, thank you for asking!"
+"What can you do?","I can answer questions and have conversations."
+"Tell me a joke","Why did the programmer quit his job? Because he didn't get arrays!"
+"What is AI?","AI stands for Artificial Intelligence."
+"Explain machine learning","Machine learning is a subset of AI where systems learn from data."
+"What is Elixir?","Elixir is a functional programming language built on the Erlang VM."
+"How do I train a model?","Use the command: ./mindset train"
+"What is the BEAM?","BEAM is the Erlang virtual machine that runs Elixir code."

@@ -409,4 +409,4 @@ Use WSL2 for full EXLA support and 10-50x speedup.
 
 ---
 
-**Built with ❤️ on the BEAM**
+**Handcrafted with ❤️ on the BEAM**

@@ -994,4 +994,4 @@ For updates and contributions, visit: https://github.com/yourusername/mindset
 
 ---
 
-*Built with ❤️ on the BEAM*
+*Handcrafted with ❤️ on the BEAM*
