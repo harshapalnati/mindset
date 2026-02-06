@@ -1,5 +1,6 @@
 defmodule MindsetWeb.ChatLive do
   use MindsetWeb, :live_view
+  require Logger
   alias Mindset.Chat
 
   def mount(_params, _session, socket) do
@@ -18,15 +19,19 @@ defmodule MindsetWeb.ChatLive do
     <div class="p-10 max-w-2xl mx-auto h-screen flex flex-col">
       <h1 class="text-3xl font-bold mb-6 text-indigo-600">Mindset AI</h1>
 
-      <div id="chat-window" class="flex-1 overflow-y-auto p-4 mb-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+      <div
+        id="chat-window"
+        class="flex-1 overflow-y-auto p-4 mb-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4"
+      >
         <%= for msg <- @messages do %>
           <div class={if msg.role == "user", do: "text-right", else: "text-left"}>
             <div class={
               "inline-block p-3 rounded-lg max-w-[80%] " <>
               if msg.role == "user", do: "bg-indigo-600 text-white", else: "bg-white text-gray-800 border"
             }>
-              <p class="text-xs font-bold uppercase mb-1 opacity-70"><%= msg.role %></p>
-              <p><%= msg.content %></p>
+              <p class="text-xs font-bold uppercase mb-1 opacity-70">{msg.role}</p>
+
+              <p>{msg.content}</p>
             </div>
           </div>
         <% end %>
@@ -39,13 +44,21 @@ defmodule MindsetWeb.ChatLive do
           </div>
         <% end %>
       </div>
-
       <%!-- Note: Use phx-change if you want to clear input, or use a hook --%>
       <form phx-submit="ask_ai" class="flex gap-2 bg-white p-2 border-t">
-        <input type="text" name="user_input" placeholder="Type something..."
-               class="flex-1 p-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-indigo-500"
-               required autocomplete="off" />
-        <button type="submit" disabled={@loading} class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
+        <input
+          type="text"
+          name="user_input"
+          placeholder="Type something..."
+          class="flex-1 p-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          required
+          autocomplete="off"
+        />
+        <button
+          type="submit"
+          disabled={@loading}
+          class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400"
+        >
           Ask
         </button>
       </form>
@@ -75,24 +88,23 @@ defmodule MindsetWeb.ChatLive do
     end)
 
     {:noreply,
-      socket
-      |> assign(loading: true)
-      |> assign(messages: socket.assigns.messages ++ [user_msg])
-    }
+     socket
+     |> assign(loading: true)
+     |> assign(messages: socket.assigns.messages ++ [user_msg])}
   end
 
   def handle_info({:ai_finished, ai_msg}, socket) do
-  Logger.info("📥 [UI] Received AI message for display: #{ai_msg.content}")
+    Logger.info("📥 [UI] Received AI message for display: #{ai_msg.content}")
 
-  {:noreply,
-   assign(socket,
-     messages: socket.assigns.messages ++ [ai_msg],
-     loading: false
-   )}
-end
+    {:noreply,
+     assign(socket,
+       messages: socket.assigns.messages ++ [ai_msg],
+       loading: false
+     )}
+  end
 
-def handle_info({:ai_error, reason}, socket) do
-  Logger.error("❌ [UI] AI Task failed. Reason: #{inspect(reason)}")
-  {:noreply, assign(socket, loading: false)}
-end
+  def handle_info({:ai_error, reason}, socket) do
+    Logger.error("❌ [UI] AI Task failed. Reason: #{inspect(reason)}")
+    {:noreply, assign(socket, loading: false)}
+  end
 end

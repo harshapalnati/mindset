@@ -7,8 +7,7 @@ defmodule Mindset.Application do
 
   @impl true
   def start(_type, _args) do
-
-     children = [
+    children = [
       # Start the Telemetry supervisor
       MindsetWeb.Telemetry,
 

@@ -4,12 +4,10 @@ defmodule Mindset.AI do
   def generate_response(prompt) do
     api_key = System.get_env("OPENAI_API_KEY")
 
-
     headers = [
       {"Authorization", "Bearer #{api_key}"},
       {"Content-Type", "application/json"}
     ]
-
 
     body = %{
       model: "gpt-4",
@@ -17,11 +15,9 @@ defmodule Mindset.AI do
       temperature: 0.7
     }
 
-
     Req.post("https://api.openai.com/v1/chat/completions", headers: headers, json: body)
     |> parse_response()
   end
-
 
   def parse_response({:ok, %{status: 200, body: body}}) do
     response_text =
