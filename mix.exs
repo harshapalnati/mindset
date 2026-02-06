@@ -11,7 +11,18 @@ defmodule Mindset.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      escript: escript()
+    ]
+  end
+
+  # Escript configuration for building standalone binary
+  defp escript do
+    [
+      main_module: Mindset.CLI,
+      name: :mindset,
+      path: "./mindset-cli",
+      strip_beams: true
     ]
   end
 
@@ -68,11 +79,14 @@ defmodule Mindset.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:nx, "~> 0.9"},
+      {:exla, "~> 0.9"},
       {:bumblebee, "~> 0.6"},
+      {:axon, "~> 0.6"},
+      {:safetensors, "~> 0.1"},
+      {:nimble_csv, "~> 1.2"},
       {:explorer, "~> 0.9"},
       {:owl, "~> 0.11"},
       {:dotenvy, "~> 1.1"}
-
     ]
   end
 
