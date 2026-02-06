@@ -1,46 +1,135 @@
-# Phase 2: The Native Unit – Onboarding & Local Inference
+# Phase 2: The Native Unit – Local Inference Engine
 
-##  Project Goal
-To transition Mindset AI from a cloud-dependent "API Wrapper" into a **Native AI Engine** that runs models locally on the user's hardware with chat UI .
-
----
-
-##  Architectural Decision: The "Windows Pivot"
-During the installation of the **Native Unit**, we encountered a significant environment blocker regarding hardware acceleration on Windows.
-
-### The Conflict: EXLA vs. Windows
-* **The Issue**: The `EXLA` (Accelerated Linear Algebra) library lacks precompiled binaries for the `x86_64-windows-cpu` target.
-* **The Failure**: Manual compilation via `XLA_BUILD=true` failed due to path length limitations, missing C++ build tools, and `:enoent` errors in the MingW64 environment.
-* **The Solution**: We pivoted to the **Pure Elixir/Nx Binary Backend**. 
-
-### Updated Strategy
-* **Backend**: Use the standard `Nx` binary backend for tensor operations.
-* **Performance**: While slightly slower than XLA, it is stable and requires **zero** complex C++ compilers or Visual Studio installations on the user's machine.
-* **Efficiency**: Targeted **1.1B** (TinyLlama) and **2B** (Gemma) parameter models to ensure smooth operation within **16GB of RAM**.
-
-
+## Project Goal Achieved
+Successfully transitioned Mindset AI from a cloud-dependent "API Wrapper" into a **Native AI Engine** that runs models locally on the user's hardware with full chat UI integration.
 
 ---
 
-##  Implementation Details
+## Implementation Summary
 
-### 1. Interactive Setup Wizard (`mix mindset.setup`)
-We built a professional-grade onboarding CLI using **Owl** and **Bumblebee**.
-* **Hardware Selection**: Provides a clear interface for users to specify their processing unit.
-* **Model Management**: A curated list of RAM-friendly models allows the user to choose their preferred "brain".
-* **Visual Feedback**: Uses `Owl.Box` for clean layout and `Owl.ProgressBar` to handle the multi-gigabyte download process.
+### EXLA Integration via WSL
+**The Challenge**: EXLA (Accelerated Linear Algebra) lacks precompiled binaries for Windows (`x86_64-windows-cpu`).
 
-### 2. Dependency Evolution
-The `mix.exs` was updated to include the AI heavy-machinery:
-* `nx`: Provides the foundation for numerical computing and tensors.
-* `bumblebee`: Manages the loading of pre-trained models and conversation logic.
-* `owl`: Provides the toolkit for the stylish terminal UI.
-* `dotenvy`: Persists local configuration (like model paths and build flags) in a `.env` file.
+**The Solution**: Run the application in **WSL2 (Windows Subsystem for Linux)**:
+- EXLA provides precompiled binaries for `x86_64-linux-gnu-cpu` ✓
+- Performance: ~3-4 seconds per inference (GPT-2) vs 2-5 minutes on Windows CPU
+- Compiler: `Elixir.EXLA` with XLA backend for optimized tensor operations
+
+### Current Working Setup
+
+**Platform**: WSL2 Ubuntu with EXLA
+**Model**: GPT-2 (openai-community/gpt2) - 124M parameters
+**Response Time**: 3-4 seconds per message
+**Compiler**: EXLA (XLA backend)
+
+**Alternative Models Available**:
+- `TinyLlama/TinyLlama-1.1B-Chat-v1.0` - Chat-optimized, 1.1B params
+- `google/gemma-2b-it` - Google's 2B parameter model
+- `sshleifer/tiny-gpt2` - Smaller/faster GPT-2 variant
 
 ---
 
-##  Current Blockers & Fixes
-| Issue | Cause | Resolution |
-| :--- | :--- | :--- |
-| `EXLA :enoent` | Missing Windows binaries and failed local C++ build. | Deep cleaned project and switched to Native Nx backend. |
-| Environment Persistence | Terminal variables were lost between sessions. | Integrated `.env` via `Dotenvy` for consistent local settings. |
+## Architecture Components
+
+### 1. AI Daemon (`lib/mindset/ai/daemon.ex`)
+The core inference engine:
+- GenServer-based background process
+- Loads model once at startup
+- Handles concurrent prediction requests
+- Auto-detects EXLA availability (falls back to Evaluator if needed)
+
+```elixir
+# Configuration
+repo = System.get_env("AI_MODEL_REPO") || "openai-community/gpt2"
+
+# Serving setup with EXLA
+serving = Bumblebee.Text.generation(model, tokenizer, generation_config,
+  compile: [batch_size: 1, sequence_length: 64],
+  defn_options: [compiler: EXLA]  # or Nx.Defn.Evaluator
+)
+```
+
+### 2. Model Configuration (`.env`)
+```bash
+AI_MODEL_REPO=openai-community/gpt2
+XLA_TARGET=cpu
+```
+
+### 3. Dependencies (`mix.exs`)
+```elixir
+{:nx, "~> 0.9"},
+{:exla, "~> 0.9"},  # Linux/WSL only
+{:bumblebee, "~> 0.6"},
+```
+
+---
+
+## WSL Setup Guide
+
+### Prerequisites
+- Windows 10/11 with WSL2 enabled
+- Ubuntu distribution installed
+
+### Installation Steps
+
+1. **Install mise (version manager)**:
+```bash
+curl https://mise.run | sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$($HOME/.local/bin/mise activate bash)"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+2. **Install Erlang & Elixir**:
+```bash
+mise use -g erlang@26.0 elixir@1.15.0
+```
+
+3. **Clone and setup project**:
+```bash
+cd ~/mindset  # or /mnt/c/... for Windows drive access
+export XLA_TARGET=cpu
+mix deps.get
+mix compile
+mix ecto.setup
+```
+
+4. **Start server**:
+```bash
+mix phx.server
+```
+
+5. **Access**: http://localhost:4000/chat
+
+---
+
+## Performance Benchmarks
+
+| Platform | Compiler | Model | Response Time |
+|----------|----------|-------|---------------|
+| Windows  | Evaluator | GPT-2 | 2-5 minutes ❌ |
+| WSL2     | EXLA      | GPT-2 | 3-4 seconds ✓ |
+| WSL2     | EXLA      | TinyLlama-1.1B | ~5-8 seconds |
+
+---
+
+## Known Limitations
+
+1. **GPT-2 is a completion model**, not chat-tuned:
+   - Input: "Hello"
+   - Output: ", I'm not sure if you're aware that..."
+   - **Fix**: Use `TinyLlama-1.1B-Chat-v1.0` for conversational responses
+
+2. **Windows native builds**: Still use `Nx.Defn.Evaluator` (slow)
+
+3. **EXLA compilation**: First run downloads/compiles XLA (~5-10 minutes)
+
+---
+
+## Future Improvements
+
+- [ ] Add model switching UI
+- [ ] Implement streaming responses
+- [ ] Add GPU support (CUDA) for faster inference
+- [ ] Quantized model support (4-bit/8-bit) for larger models
+- [ ] Windows EXLA support (if precompiled binaries become available)
